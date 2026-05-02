@@ -6,7 +6,7 @@ import connectDB from "./config/db.js";
 // Routes
 import authRoutes from "./routes/auth.route.js";
 import collaborationRoutes from "./routes/collaboration.route.js";
-// import applicationRoutes from "./routes/applicationRoutes.js";
+import applicationRoutes from "./routes/application.route.js";
 
 // Middleware
 import { errorHandler } from "./middleware/errorMiddleware.js";
@@ -29,7 +29,7 @@ app.get("/", (req, res) => {
 // API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/collaborations", collaborationRoutes);
-// app.use("/api/applications", applicationRoutes);
+app.use("/api/applications", applicationRoutes);
 
 app.use((req, res, next) => {
   res.status(404);
