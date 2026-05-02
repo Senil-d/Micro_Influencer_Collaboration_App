@@ -119,11 +119,56 @@ export const getUser = async (req, res, next) => {
 // update an user
 export const updateUser = async (req, res, next) => {
   try {
-    const { name, profileImage } = req.body;
+    // Block password updates from this route
+    if (req.body.password) {
+      res.status(400);
+      throw new Error("Use /change-password to update your password");
+    }
 
+    // Block role and email changes
+    if (req.body.role) {
+      res.status(400);
+      throw new Error("Role cannot be changed after registration");
+    }
+
+    if (req.body.email) {
+      res.status(400);
+      throw new Error("Email cannot be changed");
+    }
+
+    const {
+      name,
+      profileImage,
+      bio,
+      portfolio,
+      followersCount,
+      website,
+      socialLinks,
+    } = req.body;
+
+    // Build update object with only provided fields
     const updates = {};
     if (name) updates.name = name.trim();
     if (profileImage) updates.profileImage = profileImage;
+    if (bio) updates.bio = bio.trim();
+    if (portfolio) updates.portfolio = portfolio;
+    if (website) updates.website = website;
+    if (followersCount !== undefined) updates.followersCount = followersCount;
+
+    if (socialLinks && typeof socialLinks === "object") {
+      const allowedPlatforms = [
+        "instagram",
+        "tiktok",
+        "youtube",
+        "twitter",
+        "facebook",
+      ];
+      allowedPlatforms.forEach((platform) => {
+        if (socialLinks[platform] !== undefined) {
+          updates[`socialLinks.${platform}`] = socialLinks[platform];
+        }
+      });
+    }
 
     if (Object.keys(updates).length === 0) {
       res.status(400);
@@ -140,6 +185,25 @@ export const updateUser = async (req, res, next) => {
       success: true,
       message: "Profile updated successfully",
       user: updatedUser,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Get user profile
+export const getUserProfile = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      res.status(404);
+      throw new Error("User not found");
+    }
+
+    res.status(200).json({
+      success: true,
+      user,
     });
   } catch (err) {
     next(err);

@@ -5,21 +5,21 @@ const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true],
+      required: [true, "Name is required"],
       trim: true,
     },
 
     email: {
       type: String,
-      required: [true],
+      required: [true, "Email is required"],
       unique: true,
       lowercase: true,
-      match: [/^\S+@\S+\.\S+$/],
+      match: [/^\S+@\S+\.\S+$/, "Please use a valid email address"],
     },
 
     password: {
       type: String,
-      required: [true],
+      required: [true, "Password is required"],
       minlength: 6,
       select: false,
     },
@@ -34,13 +34,45 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+
+    bio: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    socialLinks: {
+      instagram: { type: String, default: "" },
+      tiktok: { type: String, default: "" },
+      youtube: { type: String, default: "" },
+      twitter: { type: String, default: "" },
+      facebook: { type: String, default: "" },
+    },
+
+    portfolio: {
+      type: String,
+      default: "",
+    },
+
+    // Influencer Specific
+    followersCount: {
+      type: Number,
+      default: 0,
+      min: [0, "Followers count cannot be negative"],
+    },
+
+    // Brand Specific
+    website: {
+      type: String,
+      default: "",
+    },
   },
   {
     timestamps: true,
   },
 );
 
-// Encrypting password
+// Hash Password Before Save
 userSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
 
@@ -48,10 +80,12 @@ userSchema.pre("save", async function () {
   this.password = await bcrypt.hash(this.password, salt);
 });
 
+// Compare Password
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
+// Strip Password From Response
 userSchema.methods.toJSON = function () {
   const obj = this.toObject();
   delete obj.password;
