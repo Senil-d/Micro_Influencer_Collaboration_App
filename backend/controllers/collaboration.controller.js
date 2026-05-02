@@ -1,4 +1,5 @@
 import Collaboration from "../models/collaboration.model.js";
+import Application from "../models/application.model.js";
 
 // create collaborations (Brand only)
 export const createCollaboration = async (req, res, next) => {
@@ -203,6 +204,9 @@ export const deleteCollaboration = async (req, res, next) => {
       res.status(403);
       throw new Error("Not authorized to delete this collaboration");
     }
+
+    // Delete all applications under this collaboration
+    await Application.deleteMany({ collaborationId: req.params.id });
 
     await collaboration.deleteOne();
 
