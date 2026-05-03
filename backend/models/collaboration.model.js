@@ -15,9 +15,13 @@ const collaborationSchema = new mongoose.Schema(
     },
 
     platform: {
-      type: String,
-      required: [true, "Platform is required"],
+      type: [String],
       enum: ["Instagram", "TikTok", "YouTube", "Twitter", "Facebook", "Other"],
+      required: true,
+      validate: {
+        validator: (val) => val.length > 0,
+        message: "At least one platform is required",
+      },
     },
 
     category: {

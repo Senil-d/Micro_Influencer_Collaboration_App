@@ -1,7 +1,7 @@
 import Collaboration from "../models/collaboration.model.js";
 import Application from "../models/application.model.js";
 
-// create collaborations (Brand only)
+// Create collaboration
 export const createCollaboration = async (req, res, next) => {
   try {
     const {
@@ -20,6 +20,7 @@ export const createCollaboration = async (req, res, next) => {
       !title ||
       !description ||
       !platform ||
+      platform.length === 0 ||
       !category ||
       !budget ||
       !requirements ||
@@ -47,7 +48,6 @@ export const createCollaboration = async (req, res, next) => {
       createdBy: req.user.id,
     });
 
-    // Populate brand info before sending response
     await collaboration.populate("createdBy", "name email profileImage");
 
     res.status(201).json({
@@ -60,14 +60,15 @@ export const createCollaboration = async (req, res, next) => {
   }
 };
 
-// Get all collaborations
+// Get all collaorations
 export const getAllCollaborations = async (req, res, next) => {
   try {
     const { platform, category } = req.query;
 
-    // Build filter object dynamically
     const filter = { status: "open" };
-    if (platform) filter.platform = platform;
+
+    // For array platform field use $in operator
+    if (platform) filter.platform = { $in: [platform] };
     if (category) filter.category = category;
 
     const collaborations = await Collaboration.find(filter)
@@ -84,7 +85,7 @@ export const getAllCollaborations = async (req, res, next) => {
   }
 };
 
-// Get brand posted collaborations (view own posts)
+// Get brand collaborations
 export const getBrandCollaborations = async (req, res, next) => {
   try {
     const collaborations = await Collaboration.find({ createdBy: req.user.id })
@@ -101,7 +102,7 @@ export const getBrandCollaborations = async (req, res, next) => {
   }
 };
 
-// Get collaborations by id
+// Get collaboration by Id
 export const getCollaborationById = async (req, res, next) => {
   try {
     const collaboration = await Collaboration.findById(req.params.id).populate(
@@ -123,7 +124,7 @@ export const getCollaborationById = async (req, res, next) => {
   }
 };
 
-// Update collaborations
+// Update collaboration
 export const updateCollaboration = async (req, res, next) => {
   try {
     const collaboration = await Collaboration.findById(req.params.id);
@@ -133,7 +134,6 @@ export const updateCollaboration = async (req, res, next) => {
       throw new Error("Collaboration not found");
     }
 
-    // Validate ownership
     if (collaboration.createdBy.toString() !== req.user.id.toString()) {
       res.status(403);
       throw new Error("Not authorized to update this collaboration");
@@ -151,7 +151,6 @@ export const updateCollaboration = async (req, res, next) => {
       status,
     } = req.body;
 
-    // Validate deadline if provided
     if (deadline && new Date(deadline) <= new Date()) {
       res.status(400);
       throw new Error("Deadline must be a future date");
@@ -160,7 +159,7 @@ export const updateCollaboration = async (req, res, next) => {
     const updates = {};
     if (title) updates.title = title.trim();
     if (description) updates.description = description.trim();
-    if (platform) updates.platform = platform;
+    if (platform && platform.length > 0) updates.platform = platform;
     if (category) updates.category = category;
     if (budget) updates.budget = budget;
     if (requirements) updates.requirements = requirements.trim();
@@ -189,7 +188,7 @@ export const updateCollaboration = async (req, res, next) => {
   }
 };
 
-// Delete a collaboration
+// Delete collaboration
 export const deleteCollaboration = async (req, res, next) => {
   try {
     const collaboration = await Collaboration.findById(req.params.id);
@@ -199,15 +198,12 @@ export const deleteCollaboration = async (req, res, next) => {
       throw new Error("Collaboration not found");
     }
 
-    // Validate ownership
     if (collaboration.createdBy.toString() !== req.user.id.toString()) {
       res.status(403);
       throw new Error("Not authorized to delete this collaboration");
     }
 
-    // Delete all applications under this collaboration
     await Application.deleteMany({ collaborationId: req.params.id });
-
     await collaboration.deleteOne();
 
     res.status(200).json({
