@@ -14,14 +14,17 @@ import api from "../../api/axios";
 import { colors, globalStyles } from "../../utils/globalStyles";
 
 const MyCollaborationsScreen = ({ navigation }) => {
-  const [activeTab, setActiveTab] = useState("myPosts");
   const [myPosts, setMyPosts] = useState([]);
-  const [explorePosts, setExplorePosts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Fetch My Collaborations
-  const fetchMyCollaborations = async () => {
+  const fetchMyCollaborations = async (isRefresh = false) => {
+    if (isRefresh) {
+      setIsRefreshing(true);
+    } else {
+      setIsLoading(true);
+    }
     try {
       const response = await api.get("/collaborations/my");
       setMyPosts(response.data.collaborations);
@@ -30,43 +33,18 @@ const MyCollaborationsScreen = ({ navigation }) => {
         "Error",
         error.response?.data?.message || "Failed to fetch collaborations",
       );
+    } finally {
+      if (isRefresh) {
+        setIsRefreshing(false);
+      } else {
+        setIsLoading(false);
+      }
     }
   };
 
-  // Fetch All Collaborations
-  const fetchAllCollaborations = async () => {
-    try {
-      const response = await api.get("/collaborations");
-      setExplorePosts(response.data.collaborations);
-    } catch (error) {
-      Alert.alert(
-        "Error",
-        error.response?.data?.message || "Failed to fetch collaborations",
-      );
-    }
-  };
-
-  // Fetch All Data
-  const fetchData = async (isRefresh = false) => {
-    if (isRefresh) {
-      setIsRefreshing(true);
-    } else {
-      setIsLoading(true);
-    }
-
-    await Promise.all([fetchMyCollaborations(), fetchAllCollaborations()]);
-
-    if (isRefresh) {
-      setIsRefreshing(false);
-    } else {
-      setIsLoading(false);
-    }
-  };
-
-  // Refresh on Screen Focus
   useFocusEffect(
     useCallback(() => {
-      fetchData();
+      fetchMyCollaborations();
     }, []),
   );
 
@@ -141,11 +119,22 @@ const MyCollaborationsScreen = ({ navigation }) => {
 
       {/* Platform & Category */}
       <View
-        style={[globalStyles.row, { gap: 8, marginTop: 6, marginBottom: 10 }]}
+        style={[
+          globalStyles.row,
+          { gap: 8, marginTop: 6, marginBottom: 10, flexWrap: "wrap" },
+        ]}
       >
-        <View style={styles.tag}>
-          <Text style={styles.tagText}>{item.platform}</Text>
-        </View>
+        {Array.isArray(item.platform) ? (
+          item.platform.map((p) => (
+            <View key={p} style={styles.tag}>
+              <Text style={styles.tagText}>{p}</Text>
+            </View>
+          ))
+        ) : (
+          <View style={styles.tag}>
+            <Text style={styles.tagText}>{item.platform}</Text>
+          </View>
+        )}
         <View style={styles.tag}>
           <Text style={styles.tagText}>{item.category}</Text>
         </View>
@@ -192,58 +181,14 @@ const MyCollaborationsScreen = ({ navigation }) => {
     </View>
   );
 
-  // Explore other collaborations
-  const ExploreCard = ({ item }) => (
-    <TouchableOpacity
-      style={globalStyles.card}
-      onPress={() =>
-        navigation.navigate("CollaborationDetail", {
-          collaborationId: item._id,
-        })
-      }
-      activeOpacity={0.8}
-    >
-      {/* Brand Name */}
-      <TouchableOpacity
-        onPress={() =>
-          navigation.navigate("UserProfile", { userId: item.createdBy._id })
-        }
-      >
-        <Text style={styles.brandName}>🏢 {item.createdBy.name}</Text>
-      </TouchableOpacity>
-
-      {/* Title */}
-      <Text style={styles.cardTitle} numberOfLines={1}>
-        {item.title}
-      </Text>
-
-      {/* Platform & Category */}
-      <View
-        style={[globalStyles.row, { gap: 8, marginTop: 6, marginBottom: 10 }]}
-      >
-        <View style={styles.tag}>
-          <Text style={styles.tagText}>{item.platform}</Text>
-        </View>
-        <View style={styles.tag}>
-          <Text style={styles.tagText}>{item.category}</Text>
-        </View>
-      </View>
-
-      {/* Budget & Deadline */}
-      <View style={[globalStyles.row, { justifyContent: "space-between" }]}>
-        <Text style={styles.budget}>${item.budget}</Text>
-        <Text style={styles.deadline}>
-          Deadline: {new Date(item.deadline).toLocaleDateString()}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
-
   // Empty State
-  const EmptyState = ({ message, subMessage }) => (
+  const EmptyState = () => (
     <View style={globalStyles.emptyContainer}>
-      <Text style={globalStyles.emptyText}>{message}</Text>
-      <Text style={globalStyles.emptySubText}>{subMessage}</Text>
+      <Text style={styles.emptyEmoji}>📭</Text>
+      <Text style={globalStyles.emptyText}>No collaborations yet</Text>
+      <Text style={globalStyles.emptySubText}>
+        Tap Create to post your first collaboration
+      </Text>
     </View>
   );
 
@@ -261,115 +206,56 @@ const MyCollaborationsScreen = ({ navigation }) => {
       <View style={globalStyles.screenHeader}>
         <Text style={globalStyles.screenTitle}>My Collaborations</Text>
         <Text style={globalStyles.screenSubtitle}>
-          Manage your posts and explore others
+          Manage your collaboration posts
         </Text>
       </View>
 
-      {/* Tab Switcher */}
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === "myPosts" && styles.tabActive]}
-          onPress={() => setActiveTab("myPosts")}
-        >
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === "myPosts" && styles.tabTextActive,
-            ]}
-          >
-            My Posts ({myPosts.length})
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === "explore" && styles.tabActive]}
-          onPress={() => setActiveTab("explore")}
-        >
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === "explore" && styles.tabTextActive,
-            ]}
-          >
-            Explore ({explorePosts.length})
-          </Text>
-        </TouchableOpacity>
-      </View>
+      {/* Explore Button */}
+      <TouchableOpacity
+        style={styles.exploreButton}
+        onPress={() => navigation.navigate("Explore")}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.exploreButtonText}>
+          🌍 Explore All Collaborations
+        </Text>
+      </TouchableOpacity>
 
-      {/* Content */}
-      {activeTab === "myPosts" ? (
-        <FlatList
-          data={myPosts}
-          keyExtractor={(item) => item._id}
-          renderItem={({ item }) => <MyPostCard item={item} />}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={() => fetchData(true)}
-              colors={[colors.primary]}
-            />
-          }
-          ListEmptyComponent={
-            <EmptyState
-              message="No collaborations yet"
-              subMessage="Tap Create to post your first collaboration"
-            />
-          }
-        />
-      ) : (
-        <FlatList
-          data={explorePosts}
-          keyExtractor={(item) => item._id}
-          renderItem={({ item }) => <ExploreCard item={item} />}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={() => fetchData(true)}
-              colors={[colors.primary]}
-            />
-          }
-          ListEmptyComponent={
-            <EmptyState
-              message="No collaborations found"
-              subMessage="Check back later for new opportunities"
-            />
-          }
-        />
-      )}
+      {/* My Posts List */}
+      <FlatList
+        data={myPosts}
+        keyExtractor={(item) => item._id}
+        renderItem={({ item }) => <MyPostCard item={item} />}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={() => fetchMyCollaborations(true)}
+            colors={[colors.primary]}
+          />
+        }
+        ListEmptyComponent={<EmptyState />}
+      />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  tabContainer: {
-    flexDirection: "row",
-    backgroundColor: colors.surface,
+  exploreButton: {
     marginHorizontal: 28,
     marginVertical: 16,
+    backgroundColor: colors.primaryLight,
     borderRadius: 12,
-    padding: 4,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 10,
+    paddingVertical: 14,
     alignItems: "center",
-    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.primary,
   },
-  tabActive: {
-    backgroundColor: colors.primary,
-  },
-  tabText: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: colors.textSecondary,
-  },
-  tabTextActive: {
-    color: colors.white,
+  exploreButtonText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: colors.primary,
   },
   listContent: {
     paddingHorizontal: 28,
@@ -381,12 +267,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: colors.textPrimary,
     marginTop: 6,
-  },
-  brandName: {
-    fontSize: 13,
-    color: colors.primary,
-    fontWeight: "600",
-    marginBottom: 4,
   },
   tag: {
     backgroundColor: colors.primaryLight,
@@ -449,6 +329,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
     color: colors.error,
+  },
+  emptyEmoji: {
+    fontSize: 48,
+    marginBottom: 16,
   },
 });
 
