@@ -12,18 +12,25 @@ import RegisterScreen from "../screens/auth/RegisterScreen";
 // Brand Screens
 import MyCollaborationsScreen from "../screens/brand/MyCollaborationsScreen";
 import CreateCollaborationScreen from "../screens/brand/CreateCollaborationScreen";
+import EditCollaborationScreen from "../screens/brand/EditCollaborationScreen";
 import ApplicantsScreen from "../screens/brand/ApplicantsScreen";
 
 // Influencer Screens
 import HomeScreen from "../screens/influencer/HomeScreen";
 import CollaborationDetailScreen from "../screens/influencer/CollaborationDetailScreen";
-import MyApplicationsScreen from "../screens/influencer/MyApplicationsScreen";
 import ApplyScreen from "../screens/influencer/ApplyScreen";
+import MyApplicationsScreen from "../screens/influencer/MyApplicationsScreen";
+
+// Shared Screens
+import ProfileScreen from "../screens/shared/ProfileScreen";
+import EditProfileScreen from "../screens/shared/EditProfileScreen";
+import UserProfileScreen from "../screens/shared/UserProfileScreen";
+import ApplicationDetailScreen from "../screens/shared/ApplicationDetailScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// Auth Stack
+//  Auth Stack
 const AuthStack = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -39,7 +46,7 @@ const BrandTabs = () => {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#6C63FF",
+        tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: "#999",
         tabBarStyle: {
           backgroundColor: "#fff",
@@ -60,16 +67,31 @@ const BrandTabs = () => {
         component={CreateCollaborationScreen}
         options={{ tabBarLabel: "Create" }}
       />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{ tabBarLabel: "Profile" }}
+      />
     </Tab.Navigator>
   );
 };
 
-// Brand Stack (Tabs + Extra Screens)
+// Brand Stack
 const BrandStack = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="BrandTabs" component={BrandTabs} />
       <Stack.Screen name="Applicants" component={ApplicantsScreen} />
+      <Stack.Screen
+        name="EditCollaboration"
+        component={EditCollaborationScreen}
+      />
+      <Stack.Screen
+        name="ApplicationDetail"
+        component={ApplicationDetailScreen}
+      />
+      <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+      <Stack.Screen name="UserProfile" component={UserProfileScreen} />
     </Stack.Navigator>
   );
 };
@@ -80,7 +102,7 @@ const InfluencerTabs = () => {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#6C63FF",
+        tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: "#999",
         tabBarStyle: {
           backgroundColor: "#fff",
@@ -99,13 +121,18 @@ const InfluencerTabs = () => {
       <Tab.Screen
         name="MyApplications"
         component={MyApplicationsScreen}
-        options={{ tabBarLabel: "My Applications" }}
+        options={{ tabBarLabel: "Applications" }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{ tabBarLabel: "Profile" }}
       />
     </Tab.Navigator>
   );
 };
 
-// Influencer Stack (Tabs + Extra Screens)
+// Influencer Stack
 const InfluencerStack = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -115,6 +142,12 @@ const InfluencerStack = () => {
         component={CollaborationDetailScreen}
       />
       <Stack.Screen name="Apply" component={ApplyScreen} />
+      <Stack.Screen
+        name="ApplicationDetail"
+        component={ApplicationDetailScreen}
+      />
+      <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+      <Stack.Screen name="UserProfile" component={UserProfileScreen} />
     </Stack.Navigator>
   );
 };
@@ -131,17 +164,9 @@ const RootNavigator = () => {
     );
   }
 
-  if (!user) {
-    return <AuthStack />;
-  }
-
-  if (user.role === "brand") {
-    return <BrandStack />;
-  }
-
-  if (user.role === "influencer") {
-    return <InfluencerStack />;
-  }
+  if (!user) return <AuthStack />;
+  if (user.role === "brand") return <BrandStack />;
+  if (user.role === "influencer") return <InfluencerStack />;
 };
 
 // App Navigator
