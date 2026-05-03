@@ -13,7 +13,7 @@ const router = express.Router();
 
 // Brand Routes
 router.post("/", protect, restrictTo("brand"), createCollaboration);
-router.get("/myall", protect, restrictTo("brand"), getBrandCollaborations);
+router.get("/my", protect, restrictTo("brand"), getBrandCollaborations);
 router.put("/:id", protect, restrictTo("brand"), updateCollaboration);
 router.delete("/:id", protect, restrictTo("brand"), deleteCollaboration);
 
