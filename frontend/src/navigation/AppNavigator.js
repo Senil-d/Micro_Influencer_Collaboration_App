@@ -17,21 +17,21 @@ import EditCollaborationScreen from "../screens/brand/EditCollaborationScreen";
 import ApplicantsScreen from "../screens/brand/ApplicantsScreen";
 
 // Influencer Screens
-import HomeScreen from "../screens/influencer/HomeScreen";
-import CollaborationDetailScreen from "../screens/influencer/CollaborationDetailScreen";
-import ApplyScreen from "../screens/influencer/ApplyScreen";
 import MyApplicationsScreen from "../screens/influencer/MyApplicationsScreen";
+import ApplyScreen from "../screens/influencer/ApplyScreen";
 
 // Shared Screens
+import ExploreScreen from "../screens/shared/ExploreScreen";
 import ProfileScreen from "../screens/shared/ProfileScreen";
 import EditProfileScreen from "../screens/shared/EditProfileScreen";
 import UserProfileScreen from "../screens/shared/UserProfileScreen";
 import ApplicationDetailScreen from "../screens/shared/ApplicationDetailScreen";
+import CollaborationDetailScreen from "../screens/shared/CollaborationDetailScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-//  Auth Stack
+// Auth Stack
 const AuthStack = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -82,14 +82,19 @@ const BrandStack = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="BrandTabs" component={BrandTabs} />
+      <Stack.Screen name="Explore" component={ExploreScreen} />
       <Stack.Screen name="Applicants" component={ApplicantsScreen} />
+      <Stack.Screen
+        name="ApplicationDetail"
+        component={ApplicationDetailScreen}
+      />
       <Stack.Screen
         name="EditCollaboration"
         component={EditCollaborationScreen}
       />
       <Stack.Screen
-        name="ApplicationDetail"
-        component={ApplicationDetailScreen}
+        name="CollaborationDetail"
+        component={CollaborationDetailScreen}
       />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
       <Stack.Screen name="UserProfile" component={UserProfileScreen} />
@@ -115,8 +120,8 @@ const InfluencerTabs = () => {
       }}
     >
       <Tab.Screen
-        name="Home"
-        component={HomeScreen}
+        name="Explore"
+        component={ExploreScreen}
         options={{ tabBarLabel: "Explore" }}
       />
       <Tab.Screen
@@ -160,7 +165,7 @@ const RootNavigator = () => {
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#6C63FF" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
