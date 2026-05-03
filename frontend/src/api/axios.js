@@ -1,7 +1,7 @@
 import axios from "axios";
 import { getToken } from "../utils/storage.js";
 
-const BASE_URL = "http://192.168.1.9:5000/api";
+const BASE_URL = "https://influencer-collab-api.onrender.com/api";
 
 const api = axios.create({
   baseURL: BASE_URL,
