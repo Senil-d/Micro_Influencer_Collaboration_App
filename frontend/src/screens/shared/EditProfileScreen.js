@@ -11,13 +11,16 @@ import {
   Alert,
   Animated,
   ScrollView,
+  Image,
 } from "react-native";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../api/axios";
 import { colors, globalStyles } from "../../utils/globalStyles";
+import useImageUpload from "../../hooks/useImageUpload";
 
 const EditProfileScreen = ({ navigation }) => {
   const { user, updateUserState } = useAuth();
+  const { imageUploading, pickProfileImage } = useImageUpload();
 
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
@@ -39,7 +42,6 @@ const EditProfileScreen = ({ navigation }) => {
   // Focus States
   const [nameFocused, setNameFocused] = useState(false);
   const [bioFocused, setBioFocused] = useState(false);
-  const [profileImageFocused, setProfileImageFocused] = useState(false);
   const [portfolioFocused, setPortfolioFocused] = useState(false);
   const [followersFocused, setFollowersFocused] = useState(false);
   const [websiteFocused, setWebsiteFocused] = useState(false);
@@ -122,12 +124,11 @@ const EditProfileScreen = ({ navigation }) => {
       const payload = {
         name: name.trim(),
         bio: bio.trim(),
-        profileImage: profileImage.trim(),
+        profileImage: profileImage,
         portfolio: portfolio.trim(),
         socialLinks,
       };
 
-      // Add role specific fields
       if (user.role === "influencer" && followersCount) {
         payload.followersCount = Number(followersCount);
       }
@@ -136,8 +137,6 @@ const EditProfileScreen = ({ navigation }) => {
       }
 
       const response = await api.put("/auth/update", payload);
-
-      // Update global auth state
       await updateUserState(response.data.user);
 
       Alert.alert("Success", "Profile updated successfully", [
@@ -185,6 +184,58 @@ const EditProfileScreen = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
+        {/* Profile Image Picker */}
+        <View style={styles.profileImageSection}>
+          <TouchableOpacity
+            style={styles.profileImageWrapper}
+            onPress={() => pickProfileImage((url) => setProfileImage(url))}
+            disabled={imageUploading}
+            activeOpacity={0.8}
+          >
+            {/* Avatar or Placeholder */}
+            {profileImage ? (
+              <Image
+                source={{ uri: profileImage }}
+                style={styles.profileImage}
+              />
+            ) : (
+              <View style={styles.profileImagePlaceholder}>
+                <Text style={styles.profileImagePlaceholderText}>
+                  {name
+                    ? name.charAt(0).toUpperCase()
+                    : user.name.charAt(0).toUpperCase()}
+                </Text>
+              </View>
+            )}
+
+            {/* Overlay */}
+            <View style={styles.profileImageOverlay}>
+              {imageUploading ? (
+                <ActivityIndicator color={colors.white} size="small" />
+              ) : (
+                <Text style={styles.profileImageOverlayText}>📷</Text>
+              )}
+            </View>
+          </TouchableOpacity>
+
+          {/* Label */}
+          <Text style={styles.profileImageLabel}>
+            {imageUploading ? "Uploading..." : "Tap to change profile photo"}
+          </Text>
+
+          {/* Remove Button */}
+          {profileImage ? (
+            <TouchableOpacity
+              onPress={() => setProfileImage("")}
+              style={styles.removePhotoButton}
+            >
+              <Text style={styles.removePhotoText}>Remove Photo</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+
+        <View style={globalStyles.divider} />
+
         {/* Basic Info */}
         <Text style={styles.groupTitle}>Basic Info</Text>
 
@@ -225,24 +276,6 @@ const EditProfileScreen = ({ navigation }) => {
           />
         </View>
 
-        {/* Profile Image URL */}
-        <View style={globalStyles.inputGroup}>
-          <Text style={globalStyles.label}>Profile Image URL</Text>
-          <TextInput
-            style={[
-              globalStyles.input,
-              profileImageFocused && globalStyles.inputFocused,
-            ]}
-            placeholder="Paste Firebase image URL here"
-            placeholderTextColor={colors.textMuted}
-            value={profileImage}
-            onChangeText={setProfileImage}
-            autoCapitalize="none"
-            onFocus={() => setProfileImageFocused(true)}
-            onBlur={() => setProfileImageFocused(false)}
-          />
-        </View>
-
         {/* Portfolio */}
         <View style={globalStyles.inputGroup}>
           <Text style={globalStyles.label}>Portfolio URL</Text>
@@ -262,7 +295,7 @@ const EditProfileScreen = ({ navigation }) => {
           />
         </View>
 
-        {/* Influencer Specific  */}
+        {/* Influencer Specific */}
         {user.role === "influencer" && (
           <>
             <View style={globalStyles.divider} />
@@ -468,6 +501,65 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     paddingTop: 24,
     paddingBottom: 40,
+  },
+  profileImageSection: {
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  profileImageWrapper: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    overflow: "hidden",
+    borderWidth: 2,
+    borderColor: colors.primary,
+    marginBottom: 12,
+  },
+  profileImage: {
+    width: "100%",
+    height: "100%",
+  },
+  profileImagePlaceholder: {
+    width: "100%",
+    height: "100%",
+    backgroundColor: colors.primaryLight,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  profileImagePlaceholderText: {
+    fontSize: 36,
+    fontWeight: "700",
+    color: colors.primary,
+  },
+  profileImageOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 32,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  profileImageOverlayText: {
+    fontSize: 16,
+  },
+  profileImageLabel: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginBottom: 8,
+  },
+  removePhotoButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.error,
+  },
+  removePhotoText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: colors.error,
   },
   groupTitle: {
     fontSize: 16,

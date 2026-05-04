@@ -12,7 +12,7 @@ export const createCollaboration = async (req, res, next) => {
       budget,
       requirements,
       deadline,
-      imageUrl,
+      imageUrls,
     } = req.body;
 
     // Validate required fields
@@ -44,7 +44,7 @@ export const createCollaboration = async (req, res, next) => {
       budget,
       requirements,
       deadline,
-      imageUrl: imageUrl || "",
+      imageUrls: imageUrls || [],
       createdBy: req.user.id,
     });
 
@@ -147,7 +147,7 @@ export const updateCollaboration = async (req, res, next) => {
       budget,
       requirements,
       deadline,
-      imageUrl,
+      imageUrls,
       status,
     } = req.body;
 
@@ -164,7 +164,7 @@ export const updateCollaboration = async (req, res, next) => {
     if (budget) updates.budget = budget;
     if (requirements) updates.requirements = requirements.trim();
     if (deadline) updates.deadline = deadline;
-    if (imageUrl) updates.imageUrl = imageUrl;
+    if (imageUrls && imageUrls.length > 0) updates.imageUrls = imageUrls;
     if (status) updates.status = status;
 
     if (Object.keys(updates).length === 0) {

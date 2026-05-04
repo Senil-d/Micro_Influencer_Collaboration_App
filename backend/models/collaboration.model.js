@@ -56,9 +56,9 @@ const collaborationSchema = new mongoose.Schema(
       required: [true, "Deadline is required"],
     },
 
-    imageUrl: {
-      type: String,
-      default: "",
+    imageUrls: {
+      type: [String],
+      default: [],
     },
 
     status: {

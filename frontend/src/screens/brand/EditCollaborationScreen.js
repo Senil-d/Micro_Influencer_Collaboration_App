@@ -11,9 +11,11 @@ import {
   Alert,
   Animated,
   ScrollView,
+  Image,
 } from "react-native";
 import { colors, globalStyles } from "../../utils/globalStyles";
 import api from "../../api/axios";
+import useImageUpload from "../../hooks/useImageUpload";
 
 const PLATFORMS = [
   "Instagram",
@@ -34,6 +36,7 @@ const CATEGORIES = [
   "Other",
 ];
 const STATUSES = ["open", "closed"];
+const MAX_COLLABORATION_IMAGES = 4;
 
 const EditCollaborationScreen = ({ route, navigation }) => {
   const { collaboration } = route.params;
@@ -57,7 +60,13 @@ const EditCollaborationScreen = ({ route, navigation }) => {
       ? new Date(collaboration.deadline).toISOString().split("T")[0]
       : "",
   );
-  const [imageUrl, setImageUrl] = useState(collaboration.imageUrl || "");
+  const [imageUrls, setImageUrls] = useState(
+    Array.isArray(collaboration.imageUrls)
+      ? collaboration.imageUrls
+      : collaboration.imageUrl
+        ? [collaboration.imageUrl]
+        : [],
+  );
   const [status, setStatus] = useState(collaboration.status || "open");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -67,8 +76,8 @@ const EditCollaborationScreen = ({ route, navigation }) => {
   const [budgetFocused, setBudgetFocused] = useState(false);
   const [requirementsFocused, setRequirementsFocused] = useState(false);
   const [deadlineFocused, setDeadlineFocused] = useState(false);
-  const [imageUrlFocused, setImageUrlFocused] = useState(false);
 
+  const { imageUploading, pickCollaborationImages } = useImageUpload();
   const buttonScale = useRef(new Animated.Value(1)).current;
 
   // Button Animation
@@ -147,7 +156,7 @@ const EditCollaborationScreen = ({ route, navigation }) => {
         budget: Number(budget),
         requirements: requirements.trim(),
         deadline,
-        imageUrl: imageUrl.trim(),
+        imageUrls: imageUrls,
         status,
       });
 
@@ -359,22 +368,69 @@ const EditCollaborationScreen = ({ route, navigation }) => {
           />
         </View>
 
-        {/* Image URL */}
+        {/* Image Upload */}
         <View style={globalStyles.inputGroup}>
-          <Text style={globalStyles.label}>Image URL (optional)</Text>
-          <TextInput
-            style={[
-              globalStyles.input,
-              imageUrlFocused && globalStyles.inputFocused,
-            ]}
-            placeholder="Paste Firebase image URL here"
-            placeholderTextColor={colors.textMuted}
-            value={imageUrl}
-            onChangeText={setImageUrl}
-            autoCapitalize="none"
-            onFocus={() => setImageUrlFocused(true)}
-            onBlur={() => setImageUrlFocused(false)}
-          />
+          <Text style={globalStyles.label}>
+            Collaboration Images (optional)
+            <Text style={styles.multiHint}>
+              {"  "}
+              {imageUrls.length}/{MAX_COLLABORATION_IMAGES}
+            </Text>
+          </Text>
+
+          {/* Image Grid Preview */}
+          {imageUrls.length > 0 && (
+            <View style={styles.imageGrid}>
+              {imageUrls.map((url, index) => (
+                <View key={index} style={styles.imagePreviewContainer}>
+                  <Image
+                    source={{ uri: url }}
+                    style={styles.imagePreview}
+                    resizeMode="cover"
+                  />
+                  <TouchableOpacity
+                    style={styles.removeImageButton}
+                    onPress={() =>
+                      setImageUrls((prev) => prev.filter((_, i) => i !== index))
+                    }
+                  >
+                    <Text style={styles.removeImageText}>✕</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* Add Image Button */}
+          {imageUrls.length < MAX_COLLABORATION_IMAGES && (
+            <TouchableOpacity
+              style={styles.imagePickerButton}
+              onPress={() =>
+                pickCollaborationImages(imageUrls, (updated) =>
+                  setImageUrls(updated),
+                )
+              }
+              disabled={imageUploading}
+              activeOpacity={0.7}
+            >
+              {imageUploading ? (
+                <ActivityIndicator color={colors.primary} />
+              ) : (
+                <>
+                  <Text style={styles.imagePickerIcon}>🖼️</Text>
+                  <Text style={styles.imagePickerText}>
+                    {imageUrls.length === 0
+                      ? "Tap to add images"
+                      : "Tap to add more"}
+                  </Text>
+                  <Text style={styles.imagePickerSubText}>
+                    {MAX_COLLABORATION_IMAGES - imageUrls.length} slot(s)
+                    remaining • Max 5MB each
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Status Selector */}
@@ -475,6 +531,56 @@ const styles = StyleSheet.create({
     marginTop: -8,
     marginBottom: 24,
     paddingHorizontal: 4,
+  },
+  imageGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 10,
+  },
+  imagePreviewContainer: {
+    width: "48%",
+    borderRadius: 12,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  imagePreview: {
+    width: "100%",
+    height: 100,
+  },
+  removeImageButton: {
+    padding: 6,
+    alignItems: "center",
+    backgroundColor: "#FFEBEE",
+  },
+  removeImageText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: colors.error,
+  },
+  imagePickerButton: {
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderRadius: 12,
+    borderStyle: "dashed",
+    paddingVertical: 32,
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    gap: 6,
+  },
+  imagePickerIcon: {
+    fontSize: 32,
+    marginBottom: 4,
+  },
+  imagePickerText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: colors.textSecondary,
+  },
+  imagePickerSubText: {
+    fontSize: 12,
+    color: colors.textMuted,
   },
 });
 
