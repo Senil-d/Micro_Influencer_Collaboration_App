@@ -11,7 +11,7 @@ import {
   Alert,
   Animated,
   ScrollView,
-  image,
+  Image,
 } from "react-native";
 import { colors, globalStyles } from "../../utils/globalStyles";
 import api from "../../api/axios";
