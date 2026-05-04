@@ -14,6 +14,20 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../api/axios";
 import { colors, globalStyles } from "../../utils/globalStyles";
+import ImageCarousel from "../../component/ImageCarousel";
+
+const getCategoryEmoji = (category) => {
+  const emojis = {
+    Fashion: "👗",
+    Food: "🍔",
+    Tech: "💻",
+    Fitness: "💪",
+    Beauty: "💄",
+    Travel: "✈️",
+    Gaming: "🎮",
+  };
+  return emojis[category] || "📢";
+};
 
 const CollaborationDetailScreen = ({ route, navigation }) => {
   const { collaborationId } = route.params;
@@ -23,7 +37,7 @@ const CollaborationDetailScreen = ({ route, navigation }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [hasApplied, setHasApplied] = useState(false);
 
-  // Fetch Collaboration by id
+  // Fetch Collaboration
   const fetchCollaboration = async () => {
     setIsLoading(true);
     try {
@@ -92,34 +106,13 @@ const CollaborationDetailScreen = ({ route, navigation }) => {
           <Text style={styles.backText}>← Back</Text>
         </TouchableOpacity>
 
-        {/* Collaboration Image */}
-        {collaboration.imageUrl ? (
-          <Image
-            source={{ uri: collaboration.imageUrl }}
-            style={styles.image}
-            resizeMode="cover"
-          />
-        ) : (
-          <View style={styles.imagePlaceholder}>
-            <Text style={styles.imagePlaceholderEmoji}>
-              {collaboration.category === "Fashion"
-                ? "👗"
-                : collaboration.category === "Food"
-                  ? "🍔"
-                  : collaboration.category === "Tech"
-                    ? "💻"
-                    : collaboration.category === "Fitness"
-                      ? "💪"
-                      : collaboration.category === "Beauty"
-                        ? "💄"
-                        : collaboration.category === "Travel"
-                          ? "✈️"
-                          : collaboration.category === "Gaming"
-                            ? "🎮"
-                            : "📢"}
-            </Text>
-          </View>
-        )}
+        {/* Image Carousel */}
+        <ImageCarousel
+          imageUrls={collaboration.imageUrls}
+          height={260}
+          categoryEmoji={getCategoryEmoji(collaboration.category)}
+          category={collaboration.category}
+        />
 
         {/* Main Content */}
         <View style={styles.content}>
@@ -241,7 +234,6 @@ const CollaborationDetailScreen = ({ route, navigation }) => {
             }
             activeOpacity={0.8}
           >
-            {/* Brand Avatar */}
             {brand.profileImage ? (
               <Image
                 source={{ uri: brand.profileImage }}
@@ -254,13 +246,10 @@ const CollaborationDetailScreen = ({ route, navigation }) => {
                 </Text>
               </View>
             )}
-
-            {/* Brand Details */}
             <View style={{ flex: 1 }}>
               <Text style={styles.brandName}>{brand.name}</Text>
               <Text style={styles.brandEmail}>{brand.email}</Text>
             </View>
-
             <Text style={styles.viewProfileText}>View →</Text>
           </TouchableOpacity>
         </View>
@@ -318,20 +307,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.primary,
     fontWeight: "600",
-  },
-  image: {
-    width: "100%",
-    height: 220,
-  },
-  imagePlaceholder: {
-    width: "100%",
-    height: 220,
-    backgroundColor: colors.primaryLight,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  imagePlaceholderEmoji: {
-    fontSize: 64,
   },
   content: {
     paddingHorizontal: 24,

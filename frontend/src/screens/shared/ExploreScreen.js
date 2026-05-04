@@ -14,6 +14,7 @@ import {
 import { useFocusEffect } from "@react-navigation/native";
 import api from "../../api/axios";
 import { colors, globalStyles } from "../../utils/globalStyles";
+import ImageCarousel from "../../component/ImageCarousel";
 
 const PLATFORMS = [
   "All",
@@ -35,6 +36,19 @@ const CATEGORIES = [
   "Gaming",
   "Other",
 ];
+
+const getCategoryEmoji = (category) => {
+  const emojis = {
+    Fashion: "👗",
+    Food: "🍔",
+    Tech: "💻",
+    Fitness: "💪",
+    Beauty: "💄",
+    Travel: "✈️",
+    Gaming: "🎮",
+  };
+  return emojis[category] || "📢";
+};
 
 const ExploreScreen = ({ navigation }) => {
   const [collaborations, setCollaborations] = useState([]);
@@ -80,8 +94,6 @@ const ExploreScreen = ({ navigation }) => {
 
   // Collaboration Card
   const CollaborationCard = ({ item }) => {
-    const hasImage = item.imageUrl && item.imageUrl !== "";
-
     return (
       <TouchableOpacity
         style={styles.card}
@@ -92,37 +104,13 @@ const ExploreScreen = ({ navigation }) => {
         }
         activeOpacity={0.9}
       >
-        {/* Image */}
-        {hasImage ? (
-          <Image
-            source={{ uri: item.imageUrl }}
-            style={styles.cardImage}
-            resizeMode="cover"
-          />
-        ) : (
-          <View style={styles.cardImagePlaceholder}>
-            <Text style={styles.cardImagePlaceholderText}>
-              {item.category === "Fashion"
-                ? "👗"
-                : item.category === "Food"
-                  ? "🍔"
-                  : item.category === "Tech"
-                    ? "💻"
-                    : item.category === "Fitness"
-                      ? "💪"
-                      : item.category === "Beauty"
-                        ? "💄"
-                        : item.category === "Travel"
-                          ? "✈️"
-                          : item.category === "Gaming"
-                            ? "🎮"
-                            : "📢"}
-            </Text>
-            <Text style={styles.cardImagePlaceholderCategory}>
-              {item.category}
-            </Text>
-          </View>
-        )}
+        {/* Image Carousel */}
+        <ImageCarousel
+          imageUrls={item.imageUrls}
+          height={180}
+          categoryEmoji={getCategoryEmoji(item.category)}
+          category={item.category}
+        />
 
         {/* Content */}
         <View style={styles.cardContent}>
@@ -135,7 +123,6 @@ const ExploreScreen = ({ navigation }) => {
             }
             style={[globalStyles.row, { gap: 8, marginBottom: 10 }]}
           >
-            {/* Brand Avatar */}
             {item.createdBy.profileImage ? (
               <Image
                 source={{ uri: item.createdBy.profileImage }}
@@ -253,7 +240,6 @@ const ExploreScreen = ({ navigation }) => {
 
       {/* Filters */}
       <View style={styles.filtersContainer}>
-        {/* Platform Filter */}
         <Text style={styles.filterLabel}>Platform</Text>
         <ScrollView
           horizontal
@@ -270,7 +256,6 @@ const ExploreScreen = ({ navigation }) => {
           ))}
         </ScrollView>
 
-        {/* Category Filter */}
         <Text style={[styles.filterLabel, { marginTop: 10 }]}>Category</Text>
         <ScrollView
           horizontal
@@ -372,26 +357,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 8,
     elevation: 3,
-  },
-  cardImage: {
-    width: "100%",
-    height: 180,
-  },
-  cardImagePlaceholder: {
-    width: "100%",
-    height: 180,
-    backgroundColor: colors.primaryLight,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  cardImagePlaceholderText: {
-    fontSize: 48,
-    marginBottom: 8,
-  },
-  cardImagePlaceholderCategory: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: colors.primary,
   },
   cardContent: {
     padding: 16,
